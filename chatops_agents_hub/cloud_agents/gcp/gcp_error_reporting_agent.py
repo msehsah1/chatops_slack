@@ -1,6 +1,7 @@
 import json
 from openai import OpenAI
-from cloud_platform.gcp.error_reporting import format_response_llm
+from logger import main_logger
+from chatops_tools.cloud_tools.gcp.error_reporting import format_response_llm
 from pydantic import BaseModel
 from typing import Optional
 client = OpenAI()
@@ -40,6 +41,8 @@ def summarize_error(message):
 def get_error_reporting_gcp(project_id):
     list_of_errors = format_response_llm(project_id)
     gcp_message = gcp_init_messages
+    main_logger.info("list_of_errors")
+    main_logger.info(list_of_errors)
     all_error_message = []
     if len(list_of_errors) > 0:
         for error in list_of_errors:
@@ -82,6 +85,7 @@ def execute_function_call(function):
     arguments = json.loads(function.arguments)
     
     if function_name == "get_error_reporting_gcp":
+        main_logger.info("get_error_reporting_gcp")
         result = get_error_reporting_gcp(**arguments)
     else:
         result = f"Function '{function_name}' not found."
@@ -101,9 +105,11 @@ def handle_user_request(user_request):
         tool_choice="auto",
     )
     message = response.choices[0].message
+    main_logger.info(f"OpenAI message {message}")
     if message.tool_calls:
         function = message.tool_calls[0].function
         result = execute_function_call(function)
     else:
         result = message.content
     return result
+

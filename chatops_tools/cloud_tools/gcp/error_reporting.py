@@ -3,6 +3,7 @@ from google.auth.transport.requests import Request
 import requests
 import datetime
 import json
+from logger import main_logger
 
 # Constants
 SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
@@ -38,7 +39,8 @@ def list_error_groups(project_id):
 
     # Prepare the request parameters
     params = {
-        "pageSize": 100  # Adjust as needed
+        "pageSize": 100,  # Adjust as needed
+        "timeRange.period" : "PERIOD_30_DAYS"
     }
 
     url = f"{API_BASE_URL}/projects/{project_id}/groupStats"
@@ -53,6 +55,8 @@ def list_error_groups(project_id):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
             data = response.json()
+            main_logger.info("error")
+            main_logger.info(data)
             error_groups.extend(data.get('errorGroupStats', []))
             next_page_token = data.get('nextPageToken')
             if not next_page_token:
@@ -68,6 +72,7 @@ def list_error_groups(project_id):
 def format_response_llm(project_id):
     list_errors = []
     error_groups = list_error_groups(project_id)
+    print("error_groups==",error_groups)
     for group_stat in error_groups:
         group = group_stat.get('group', {})
         group_resolution_status = group.get('resolutionStatus') 
@@ -83,3 +88,4 @@ def format_response_llm(project_id):
             error_info["error_message"] =representative.get('message',{})
             list_errors.append(error_info) 
     return list_errors
+
